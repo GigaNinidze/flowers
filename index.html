@@ -100,6 +100,10 @@
       cursor: pointer;
     }
 
+    #startArButton {
+      background: #C4D6B0;
+    }
+
     .start-overlay {
       position: fixed;
       inset: 0;
@@ -112,6 +116,19 @@
       -webkit-backdrop-filter: blur(10px);
     }
 
+    .start-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .start-logo {
+      width: min(180px, 48vw);
+      height: auto;
+      display: block;
+    }
+
     .start-overlay.hidden {
       display: none;
     }
@@ -119,7 +136,10 @@
 </head>
 <body>
   <div id="startOverlay" class="start-overlay">
-    <button id="startArButton" class="glass-button" type="button">Start AR Camera</button>
+    <div class="start-panel">
+      <img class="start-logo" src="./assets/logo.png" alt="Flower Shop logo" />
+      <button id="startArButton" class="glass-button" type="button">Allow camera access to see the bouquet</button>
+    </div>
   </div>
 
   <div id="scanOverlay" class="scan-overlay">Scan the business card to see the flowers</div>
