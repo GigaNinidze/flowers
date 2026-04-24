@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -8,7 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     :root {
-      --color-primary: #FA8148;
       --space-3: 12px;
       --space-4: 16px;
       --space-6: 24px;
@@ -19,16 +19,35 @@
       box-sizing: border-box;
     }
 
-    /* CRITICAL FIX: Ensure body and html are completely transparent so the MindAR video feed shows through */
+    /* 1. Ensure the root elements have absolutely no background color */
     html, body {
       margin: 0;
-      width: 100%;
-      height: 100%;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: transparent !important;
     }
 
+    /* 2. Force the AR canvas to be transparent and sit above the video */
+    .a-canvas {
+      background-color: transparent !important;
+      z-index: 1 !important;
+    }
+
+    /* 3. Ensure the MindAR camera feed stays at the back but remains visible */
+    video {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: cover !important;
+      z-index: -2 !important;
+    }
+
+    /* UI Overlay Styles */
     .scan-overlay {
       position: fixed;
       top: var(--space-6);
@@ -37,7 +56,7 @@
       z-index: 10;
       padding: var(--space-3) var(--space-4);
       border-radius: var(--radius);
-      background: rgba(255, 245, 178, 0.72);
+      background: rgba(255, 245, 178, 0.9);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       color: #1F1F1F;
@@ -70,13 +89,15 @@
       min-height: 48px;
       padding: var(--space-3) var(--space-6);
       border-radius: var(--radius);
-      background: rgba(250, 129, 72, 0.28);
+      background: rgba(250, 129, 72, 0.9);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       color: #1F1F1F;
       text-decoration: none;
       font-weight: 700;
       box-shadow: 0 10px 30px rgba(31, 31, 31, 0.2);
+      border: none;
+      cursor: pointer;
     }
 
     .start-overlay {
@@ -86,7 +107,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(228, 179, 177, 0.84);
+      background: rgba(228, 179, 177, 0.95);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
@@ -111,8 +132,7 @@
 
   <a-scene
     mindar-image="imageTargetSrc: ./assets/card.mind; autoStart: false; uiScanning: no; uiLoading: no; uiError: no;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true"
+    renderer="colorManagement: true, physicallyCorrectLights: true; alpha: true;"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
@@ -137,7 +157,6 @@
     const scanOverlay = document.getElementById("scanOverlay");
     const cardTarget = document.getElementById("cardTarget");
 
-    // CRITICAL FIX: Let MindAR handle the camera stream to prevent iOS Safari hardware locks
     startArButton.addEventListener("click", () => {
       const mindarSystem = sceneEl.systems["mindar-image-system"];
       if (mindarSystem) {
