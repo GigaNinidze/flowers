@@ -71,6 +71,25 @@
       pointer-events: none;
     }
 
+    .discount-badge {
+      position: fixed;
+      top: calc(var(--space-6) + 68px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius);
+      background: rgba(3, 206, 164, 0.88);
+      color: #1F1F1F;
+      text-align: center;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(31, 31, 31, 0.15);
+    }
+
+    .discount-badge.hidden {
+      display: none;
+    }
+
     .bottom-actions {
       position: fixed;
       left: 0;
@@ -138,11 +157,12 @@
   <div id="startOverlay" class="start-overlay">
     <div class="start-panel">
       <img class="start-logo" src="./assets/logo.png" alt="Flower Shop logo" />
-      <button id="startArButton" class="glass-button" type="button">Allow camera access to see the bouquet</button>
+      <button id="startArButton" class="glass-button" type="button">Allow camera access</button>
     </div>
   </div>
 
   <div id="scanOverlay" class="scan-overlay">Scan the business card to see the flowers</div>
+  <div id="discountBadge" class="discount-badge hidden">Discount code: FlowershopBarcelona2026</div>
 
   <div class="bottom-actions">
     <a class="glass-button" href="https://www.instagram.com/flowershop.barcelona/" target="_blank" rel="noopener noreferrer">
@@ -166,7 +186,7 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity id="cardTarget" mindar-image-target="targetIndex: 0">
-      <a-gltf-model src="#flowerModel" rotation="90 0 0" position="0 0 0" scale="3 3 3"></a-gltf-model>
+      <a-gltf-model src="#flowerModel" rotation="90 0 0" position="0 0 0" scale="4 4 4"></a-gltf-model>
     </a-entity>
   </a-scene>
 
@@ -175,6 +195,7 @@
     const startOverlay = document.getElementById("startOverlay");
     const startArButton = document.getElementById("startArButton");
     const scanOverlay = document.getElementById("scanOverlay");
+    const discountBadge = document.getElementById("discountBadge");
     const cardTarget = document.getElementById("cardTarget");
 
     startArButton.addEventListener("click", () => {
@@ -187,10 +208,12 @@
 
     cardTarget.addEventListener("targetFound", () => {
       scanOverlay.classList.add("hidden");
+      discountBadge.classList.remove("hidden");
     });
 
     cardTarget.addEventListener("targetLost", () => {
       scanOverlay.classList.remove("hidden");
+      discountBadge.classList.add("hidden");
     });
   </script>
 </body>
