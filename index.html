@@ -11,7 +11,7 @@
       --color-primary: #FA8148;
       --color-danger: #CA1551;
       --color-success: #03CEA4;
-      --color-bg: #FFF5B2;
+      --color-bg: #E4B3B1;
       --space-2: 8px;
       --space-3: 12px;
       --space-4: 16px;
@@ -30,6 +30,13 @@
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--color-bg);
+    }
+
+    a-scene {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
     }
 
     .scan-overlay {
@@ -112,6 +119,7 @@
     mindar-image="imageTargetSrc: ./assets/card.mind; uiScanning: no; uiLoading: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.001;"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights: true; alpha: true; antialias: true"
+    background="color: transparent"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
@@ -129,7 +137,7 @@
         src="#flowerModel"
         rotation="90 0 0"
         position="0 0 0"
-        scale="0.5 0.5 0.5"
+        scale="2 2 2"
       ></a-gltf-model>
     </a-entity>
   </a-scene>
