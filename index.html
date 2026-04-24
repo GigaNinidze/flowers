@@ -71,25 +71,6 @@
       pointer-events: none;
     }
 
-    .discount-badge {
-      position: fixed;
-      top: calc(var(--space-6) + 68px);
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      padding: var(--space-3) var(--space-4);
-      border-radius: var(--radius);
-      background: rgba(3, 206, 164, 0.88);
-      color: #1F1F1F;
-      text-align: center;
-      font-weight: 700;
-      box-shadow: 0 8px 24px rgba(31, 31, 31, 0.15);
-    }
-
-    .discount-badge.hidden {
-      display: none;
-    }
-
     .bottom-actions {
       position: fixed;
       left: 0;
@@ -108,7 +89,7 @@
       min-height: 48px;
       padding: var(--space-3) var(--space-6);
       border-radius: var(--radius);
-      background: rgba(250, 129, 72, 0.9);
+      background: rgba(228, 179, 177, 0.9);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       color: #1F1F1F;
@@ -162,11 +143,15 @@
   </div>
 
   <div id="scanOverlay" class="scan-overlay">Scan the business card to see the flowers</div>
-  <div id="discountBadge" class="discount-badge hidden">Discount code: FlowershopBarcelona2026</div>
 
   <div class="bottom-actions">
-    <a class="glass-button" href="https://www.instagram.com/flowershop.barcelona/" target="_blank" rel="noopener noreferrer">
-      Instagram
+    <a
+      class="glass-button"
+      href="https://www.flowershopbarcelona.com/checkouts/cn/hWNBPUBFKe8KlWaZuu0rUUwV/es-es?_r=AQABksMKMrDvnQI-1_rz97HrsDaZXlqr4mYAyusKY1Dq&cart_link_id=oum4DuJH"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Buy now
     </a>
   </div>
 
@@ -195,7 +180,6 @@
     const startOverlay = document.getElementById("startOverlay");
     const startArButton = document.getElementById("startArButton");
     const scanOverlay = document.getElementById("scanOverlay");
-    const discountBadge = document.getElementById("discountBadge");
     const cardTarget = document.getElementById("cardTarget");
 
     startArButton.addEventListener("click", () => {
@@ -208,12 +192,10 @@
 
     cardTarget.addEventListener("targetFound", () => {
       scanOverlay.classList.add("hidden");
-      discountBadge.classList.remove("hidden");
     });
 
     cardTarget.addEventListener("targetLost", () => {
       scanOverlay.classList.remove("hidden");
-      discountBadge.classList.add("hidden");
     });
   </script>
 </body>
