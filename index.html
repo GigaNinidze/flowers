@@ -9,10 +9,6 @@
   <style>
     :root {
       --color-primary: #FA8148;
-      --color-danger: #CA1551;
-      --color-success: #03CEA4;
-      --color-bg: #E4B3B1;
-      --space-2: 8px;
       --space-3: 12px;
       --space-4: 16px;
       --space-6: 24px;
@@ -23,30 +19,14 @@
       box-sizing: border-box;
     }
 
+    /* CRITICAL FIX: Ensure body and html are completely transparent so the MindAR video feed shows through */
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--color-bg);
-    }
-
-    a-scene {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      background: transparent !important;
-    }
-
-    .a-canvas,
-    video {
-      background: transparent !important;
-    }
-
-    .a-loader-title {
-      display: none !important;
+      background-color: transparent !important;
     }
 
     .scan-overlay {
@@ -63,14 +43,12 @@
       color: #1F1F1F;
       text-align: center;
       font-weight: 600;
-      letter-spacing: 0.2px;
       box-shadow: 0 8px 24px rgba(31, 31, 31, 0.15);
-      transition: opacity 220ms ease, transform 220ms ease;
+      transition: opacity 220ms ease;
     }
 
     .scan-overlay.hidden {
       opacity: 0;
-      transform: translateX(-50%) translateY(-6px);
       pointer-events: none;
     }
 
@@ -83,7 +61,6 @@
       display: flex;
       justify-content: center;
       padding: 0 var(--space-4);
-      gap: var(--space-3);
     }
 
     .glass-button {
@@ -100,14 +77,6 @@
       text-decoration: none;
       font-weight: 700;
       box-shadow: 0 10px 30px rgba(31, 31, 31, 0.2);
-      transition: transform 160ms ease, background-color 160ms ease;
-    }
-
-    .glass-button:hover,
-    .glass-button:focus-visible {
-      background: rgba(250, 129, 72, 0.42);
-      transform: translateY(-1px);
-      outline: none;
     }
 
     .start-overlay {
@@ -117,7 +86,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: var(--space-4);
       background: rgba(228, 179, 177, 0.84);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -136,21 +104,15 @@
   <div id="scanOverlay" class="scan-overlay">Scan the business card to see the flowers</div>
 
   <div class="bottom-actions">
-    <a
-      class="glass-button"
-      href="https://www.instagram.com/flowershop.barcelona/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a class="glass-button" href="https://www.instagram.com/flowershop.barcelona/" target="_blank" rel="noopener noreferrer">
       Instagram
     </a>
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: ./assets/card.mind; autoStart: false; uiScanning: no; uiLoading: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.001;"
+    mindar-image="imageTargetSrc: ./assets/card.mind; autoStart: false; uiScanning: no; uiLoading: no; uiError: no;"
     color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true; alpha: true; antialias: true"
-    background="color: transparent"
+    renderer="colorManagement: true, physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
@@ -164,12 +126,7 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity id="cardTarget" mindar-image-target="targetIndex: 0">
-      <a-gltf-model
-        src="#flowerModel"
-        rotation="90 0 0"
-        position="0 0 0"
-        scale="2 2 2"
-      ></a-gltf-model>
+      <a-gltf-model src="#flowerModel" rotation="90 0 0" position="0 0 0" scale="2 2 2"></a-gltf-model>
     </a-entity>
   </a-scene>
 
@@ -180,24 +137,14 @@
     const scanOverlay = document.getElementById("scanOverlay");
     const cardTarget = document.getElementById("cardTarget");
 
-    const startAr = async () => {
-      try {
-        // iOS/Safari can require a direct user gesture for camera permission.
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        stream.getTracks().forEach((track) => track.stop());
-      } catch (error) {
-        alert("Camera permission is required to use AR. Please allow camera access and try again.");
-        return;
-      }
-
+    // CRITICAL FIX: Let MindAR handle the camera stream to prevent iOS Safari hardware locks
+    startArButton.addEventListener("click", () => {
       const mindarSystem = sceneEl.systems["mindar-image-system"];
       if (mindarSystem) {
-        await mindarSystem.start();
+        mindarSystem.start();
         startOverlay.classList.add("hidden");
       }
-    };
-
-    startArButton.addEventListener("click", startAr);
+    });
 
     cardTarget.addEventListener("targetFound", () => {
       scanOverlay.classList.add("hidden");
