@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AR Flowers Demo</title>
+  <link rel="preload" href="./assets/flower_bouquet_metool.glb" as="fetch" crossorigin="anonymous" />
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
@@ -13,6 +14,12 @@
       --space-4: 16px;
       --space-6: 24px;
       --radius: 14px;
+      /* semantic palette (avoid extra hard-coded hex in UI) */
+      --color-vanilla: #fff5b2;
+      --color-mint-confirm: #03cea4;
+      --color-primary: #fa8148;
+      --color-rose: #ca1551;
+      --color-text: #1f1f1f;
     }
 
     * {
@@ -57,9 +64,10 @@
       padding: var(--space-3) var(--space-4);
       border-radius: var(--radius);
       background: rgba(255, 245, 178, 0.9);
+      background: color-mix(in srgb, var(--color-vanilla) 90%, transparent);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      color: #1F1F1F;
+      color: var(--color-text);
       text-align: center;
       font-weight: 600;
       box-shadow: 0 8px 24px rgba(31, 31, 31, 0.15);
@@ -92,16 +100,28 @@
       background: rgba(228, 179, 177, 0.9);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      color: #1F1F1F;
+      color: var(--color-text);
       text-decoration: none;
       font-weight: 700;
       box-shadow: 0 10px 30px rgba(31, 31, 31, 0.2);
       border: none;
       cursor: pointer;
+      transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+    }
+
+    .glass-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      box-shadow: 0 6px 18px rgba(31, 31, 31, 0.12);
+    }
+
+    .glass-button:not(:disabled):active {
+      transform: scale(0.98);
     }
 
     #startArButton {
-      background: #C4D6B0;
+      background: #c4d6b0;
+      background: color-mix(in srgb, var(--color-mint-confirm) 35%, #c4d6b0);
     }
 
     .start-overlay {
@@ -123,6 +143,18 @@
       gap: var(--space-4);
     }
 
+    .start-hint {
+      margin: 0;
+      max-width: min(320px, 90vw);
+      padding: 0 var(--space-3);
+      text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      font-weight: 500;
+      color: var(--color-text);
+      letter-spacing: 0.01em;
+    }
+
     .start-logo {
       width: min(180px, 48vw);
       height: auto;
@@ -138,7 +170,8 @@
   <div id="startOverlay" class="start-overlay">
     <div class="start-panel">
       <img class="start-logo" src="./assets/logo.png" alt="Flower Shop logo" />
-      <button id="startArButton" class="glass-button" type="button">Allow camera access</button>
+      <p class="start-hint" id="startHint">For Augmented Reality Experience, please allow camera access</p>
+      <button id="startArButton" class="glass-button" type="button" disabled aria-busy="true">Preparing experience…</button>
     </div>
   </div>
 
@@ -161,7 +194,7 @@
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
-    <a-assets>
+    <a-assets timeout="120000">
       <a-asset-item id="flowerModel" src="./assets/flower_bouquet_metool.glb"></a-asset-item>
     </a-assets>
 
@@ -176,27 +209,102 @@
   </a-scene>
 
   <script>
-    const sceneEl = document.querySelector("a-scene");
-    const startOverlay = document.getElementById("startOverlay");
-    const startArButton = document.getElementById("startArButton");
-    const scanOverlay = document.getElementById("scanOverlay");
-    const cardTarget = document.getElementById("cardTarget");
+    (function () {
+      const sceneEl = document.querySelector("a-scene");
+      const startOverlay = document.getElementById("startOverlay");
+      const startArButton = document.getElementById("startArButton");
+      const scanOverlay = document.getElementById("scanOverlay");
+      const cardTarget = document.getElementById("cardTarget");
+      const assetsEl = sceneEl && sceneEl.querySelector("a-assets");
+      const flowerModelAsset = document.getElementById("flowerModel");
 
-    startArButton.addEventListener("click", () => {
-      const mindarSystem = sceneEl.systems["mindar-image-system"];
-      if (mindarSystem) {
-        mindarSystem.start();
-        startOverlay.classList.add("hidden");
+      const LABEL_READY = "Allow Camera";
+      const LABEL_LOAD = "Preparing experience…";
+      const LABEL_FAIL = "Could not load 3D model — refresh";
+
+      let arLaunchAllowed = false;
+
+      function setStartReady(ready) {
+        arLaunchAllowed = ready;
+        if (ready) {
+          startArButton.disabled = false;
+          startArButton.textContent = LABEL_READY;
+          startArButton.setAttribute("aria-busy", "false");
+          startArButton.setAttribute("aria-label", "Start AR — allow camera access");
+        } else {
+          startArButton.disabled = true;
+          startArButton.textContent = LABEL_LOAD;
+          startArButton.setAttribute("aria-busy", "true");
+        }
       }
-    });
 
-    cardTarget.addEventListener("targetFound", () => {
-      scanOverlay.classList.add("hidden");
-    });
+      function onAssetFailure() {
+        arLaunchAllowed = false;
+        startArButton.disabled = true;
+        startArButton.textContent = LABEL_FAIL;
+        startArButton.setAttribute("aria-busy", "false");
+        startArButton.setAttribute("aria-label", "3D model failed to load. Refresh the page.");
+      }
 
-    cardTarget.addEventListener("targetLost", () => {
-      scanOverlay.classList.remove("hidden");
-    });
+      // A-Frame emits `loaded` on the scene only after `a-assets` have finished, so the GLB is fetched before the user can start AR.
+      function onSceneLoaded() {
+        setStartReady(true);
+      }
+
+      if (sceneEl) {
+        if (sceneEl.hasLoaded) {
+          onSceneLoaded();
+        } else {
+          sceneEl.addEventListener("loaded", onSceneLoaded, { once: true });
+        }
+      } else {
+        onAssetFailure();
+      }
+
+      if (assetsEl) {
+        assetsEl.addEventListener("timeout", onAssetFailure, { once: true });
+      }
+
+      if (flowerModelAsset) {
+        flowerModelAsset.addEventListener("error", onAssetFailure, { once: true });
+      }
+
+      startArButton.addEventListener("click", () => {
+        if (!arLaunchAllowed) {
+          return;
+        }
+        const mindarSystem = sceneEl && sceneEl.systems["mindar-image-system"];
+        if (!mindarSystem) {
+          return;
+        }
+        startArButton.disabled = true;
+        startArButton.setAttribute("aria-busy", "true");
+        startArButton.textContent = "Starting…";
+        const hideStart = () => {
+          startOverlay.classList.add("hidden");
+        };
+        let startResult;
+        try {
+          startResult = mindarSystem.start();
+        } catch (_e) {
+          hideStart();
+          return;
+        }
+        if (startResult && typeof startResult.then === "function") {
+          startResult.then(hideStart).catch(hideStart);
+        } else {
+          requestAnimationFrame(hideStart);
+        }
+      });
+
+      cardTarget.addEventListener("targetFound", () => {
+        scanOverlay.classList.add("hidden");
+      });
+
+      cardTarget.addEventListener("targetLost", () => {
+        scanOverlay.classList.remove("hidden");
+      });
+    })();
   </script>
 </body>
 </html>
